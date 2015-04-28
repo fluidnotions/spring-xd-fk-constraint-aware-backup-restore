@@ -1,0 +1,21 @@
+.mymodal {
+    display:    none;
+    position:   fixed;
+    z-index:    1000;
+    top:        0;
+    left:       0;
+    height:     100%;
+    width:      100%;
+    background: rgba(187, 212, 251, 0.6)
+    			url('loading.gif') 
+                50% 50% 
+                no-repeat;
+}
+
+body.loading {
+    overflow: hidden;   
+}
+
+body.loading .mymodal {
+    display: block;
+}

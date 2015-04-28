@@ -1,0 +1,88 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:batch="http://www.springframework.org/schema/batch" xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:int="http://www.springframework.org/schema/integration"
+	xmlns:jdbc="http://www.springframework.org/schema/jdbc" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:util="http://www.springframework.org/schema/util"
+	xsi:schemaLocation="http://www.springframework.org/schema/batch	http://www.springframework.org/schema/batch/spring-batch-3.0.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+		http://www.springframework.org/schema/integration http://www.springframework.org/schema/integration/spring-integration.xsd
+		http://www.springframework.org/schema/jdbc http://www.springframework.org/schema/jdbc/spring-jdbc.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+		http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-3.2.xsd">
+		
+   
+	<batch:job id="job" restartable="${restartable}" xmlns="http://www.springframework.org/schema/batch">
+		<batch:step id="step1-unzipFile">
+			<batch:tasklet ref="unzipFileTasklet" />
+			<batch:next on="COMPLETED" to="step2-import" />
+		</batch:step>
+		<batch:step id="step2-import"> <!-- we can't use a commit-interval="${commitInterval} cause it messes with 2nd pass import processing if the commit ends up being the middle of the file -->
+			<batch:tasklet>
+				<batch:chunk reader="multiResourceReader" writer="itemWriter" chunk-completion-policy="completionPolicy"/>	
+			</batch:tasklet>
+			<batch:next on="COMPLETED" to="step3-fileCleanUp" />
+		</batch:step>
+		<batch:step id="step3-fileCleanUp">
+			<batch:tasklet ref="fileCleanUpTasklet" />
+		</batch:step>
+	</batch:job>
+	
+	<bean id="moduleDataSource" class="org.apache.tomcat.jdbc.pool.DataSource"
+		destroy-method="close">
+		<property name="driverClassName" value="${driverClassName}" />
+		<property name="url" value="${dbUrl}" />
+		<property name="username" value="${dbUsername}" />
+		<property name="password" value="${dbPassword}" />
+		<property name="initialSize" value="0" />
+		<property name="maxActive" value="100" />
+		<property name="maxIdle" value="100" />
+		<property name="minIdle" value="10" />
+		<property name="maxWait" value="30000" />
+		<property name="validationQuery"
+			value="select 1 from INFORMATION_SCHEMA.SYSTEM_USERS" />
+		<property name="timeBetweenEvictionRunsMillis" value="5000" />
+		<property name="minEvictableIdleTimeMillis" value="30000" />
+	</bean>
+	
+	<bean id="completionPolicy" class="com.fluidnotions.springbatch.iimport.extended.ChunckSizeOrEOFCompletionPolicy"> 
+		<property name="chunkSize" value="${commitInterval}"/>
+		<!-- implements PeekableItemReader<Tuple> because we need to detect eof and 
+		SequentialMultiFileResourceTupleItemReader hide eof this when it parses the next resource  -->
+		<property name="reader" ref="multiResourceReader"/> 
+	</bean>
+
+	
+	<bean id="multiResourceReader" class="com.fluidnotions.springbatch.iimport.extended.SequentialMultiFileResourceTupleItemReader" scope="step">
+		<property name="resourceDirectoryPath" value="${importDir}/#{jobParameters['jobKey']}/"/>
+		<property name="delegate" ref="flatFileItemReader"/>
+	</bean>
+
+	<bean id="flatFileItemReader" class="org.springframework.batch.item.file.FlatFileItemReader">
+		<property name="lineMapper" ref="lineMapper" />
+	</bean>
+
+	<bean id="lineMapper" class="com.fluidnotions.springbatch.iimport.extended.JsonToTupleLineMapper"/>
+		
+	<bean id="itemWriter" class="com.fluidnotions.springbatch.iimport.extended.TupleJdbcBatchItemWriter" scope="step">
+		<property name="moduleDataSource" ref="moduleDataSource"/>
+		<property name="dataSource" ref="dataSource"/>
+		<property name="jobKey" value="#{jobParameters['jobKey']}"/>
+		<property name="jobDef" value="${xd.job.name}"/>
+	</bean>
+	
+	<!-- tasklets -->
+	  	 
+  	 <bean id="unzipFileTasklet" class="com.fluidnotions.springbatch.iimport.tasklets.UnZipFile" scope="step">
+		<!-- the temp directory the files are unzipped to end up being #{jobParameters['importZipFileName']} -->
+		<property name="importZipFileName" value="${uploadDir}/#{jobParameters['importZipFileName']}" />
+		<property name="jobKey" value="#{jobParameters['jobKey']}"/>
+		<property name="importDir" value="${importDir}" />
+  	 </bean>
+	
+	 <bean id="fileCleanUpTasklet" class="com.fluidnotions.springbatch.iimport.tasklets.FileCleanUp" scope="step">
+		<property name="directory" value="file:${importDir}/#{jobParameters['jobKey']}" />
+		<property name="deleteFolder" value="true"/>
+	</bean>
+
+</beans>			

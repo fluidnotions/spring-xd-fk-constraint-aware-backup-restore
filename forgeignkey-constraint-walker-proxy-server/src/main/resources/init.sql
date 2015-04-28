@@ -1,0 +1,41 @@
+CREATE TABLE `MY_XD_RELATIONAL_DATA_PORT_JOB_PARAM` (
+  `GUID` int(11) NOT NULL AUTO_INCREMENT,
+  `JOB_KEY` varchar(45) NOT NULL,
+  `FILE_NAME_PREFIX` varchar(45) NOT NULL,
+  `FILE_NAME` varchar(45) NOT NULL,
+  `SQL_QUERY` longtext NOT NULL,
+  `EXECUTED` int(1) DEFAULT NULL,
+  `JOB_DEF_NAME` varchar(45),
+  PRIMARY KEY (`GUID`)
+) ENGINE=InnoDB AUTO_INCREMENT=38 DEFAULT CHARSET=latin1
+  
+CREATE TABLE `MY_XD_JOB_EXECUTION_STATUS_PAYLOAD` (
+  `payload` longtext DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+CREATE TABLE `MY_XD_JOB_MOD_DS` (
+  `JOB_DEF_NAME` varchar(45) NOT NULL,
+  `URL` varchar(45) NOT NULL,
+  `USERNAME` varchar(45) NOT NULL,
+  `PASSWORD` varchar(45) NOT NULL,
+  `DRIVER` varchar(45) NOT NULL DEFAULT 'com.mysql.jdbc.Driver',
+  `EXPORT_DIR` varchar(200),
+  `IMPORT_DIR` varchar(200),
+  `EXPORT_FILE_EXTENSION` varchar(25) NOT NULL,
+  PRIMARY KEY (`JOB_DEF_NAME`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+CREATE TABLE `MY_XD_IMPORT_REPORT` (
+  `jobDef` varchar(50) NOT NULL,
+  `jobKey` varchar(50) NOT NULL,
+  `statusType` varchar(45) NOT NULL,
+  `tableName` varchar(45) NOT NULL,
+  `data` longtext NOT NULL,
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  PRIMARY KEY (`id`,`jobDef`,`jobKey`)
+) ENGINE=InnoDB AUTO_INCREMENT=30 DEFAULT CHARSET=latin1;
+
+
+
+
+
