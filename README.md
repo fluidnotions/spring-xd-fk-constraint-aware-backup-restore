@@ -1,0 +1,2 @@
+# spring-xd-fk-constraint-aware-backup-restore
+The purpose of the application is to centralize big data import/export jobs, with foreign key constraint awareness for multiple applications. A web user interface that can easily be integrated into existing other web applications using CORS is provided. A proxy server mediates spring xd processes through REST API interactions, setting up and keeping in sync job definitions and associated stream tap definitions automatically for registered data sources. 
