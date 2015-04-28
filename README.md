@@ -90,7 +90,7 @@ Lastly the **xdserverurl** property, needs to be provided in the 'forgeignkey-co
 ###Downloading the Backup Archive
 Since the backup job is running on spring xd and the proxy server is mediating the interaction between the browser client and spring xd, we need a way for the proxy server to know when a particular job has completed. The POST to launch the job on xd does not respond with the job execution id. But there is a workaround.
 
-We create a new table called *MY_XD_JOB_EXECUTION_STATUS_PAYLOAD* in the xdjob database **(the one that spring xd uses, where we created the *MY_XD_RELATIONAL_DATA_PORT_JOB_PARAM* table)**
+We create a new table called *MY_XD_JOB_EXECUTION_STATUS_PAYLOAD* in the xdjob database *(the one that spring xd uses, where we created the *MY_XD_RELATIONAL_DATA_PORT_JOB_PARAM* table)*
 
 A tap stream is created by the proxy server on start up  for each of our job definitions, an example is shown bellow. The easiest place to  manually  create simple taps like this is in the xd shell,though this is not necessary since the proxy server handles creation automatically . This simple tap will then capture JobExecution events, related to any job launched using the job definition specified and save them to the tables single column 'payload'.
 
